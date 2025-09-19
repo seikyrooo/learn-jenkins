@@ -49,7 +49,7 @@ pipeline {
     stage('Build Image') {
       steps {
         sh '''
-          set -euxo pipefail
+          set -eux
           docker build --pull -t ${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA} .
           docker tag ${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA} ${REGISTRY}/${IMAGE_NAME}:latest
         '''
@@ -59,7 +59,7 @@ pipeline {
     stage('Push Image') {
       steps {
         sh '''
-          set -euxo pipefail
+          set -eux
           docker push ${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA}
           docker push ${REGISTRY}/${IMAGE_NAME}:latest
         '''
@@ -71,7 +71,7 @@ pipeline {
         script {
           try {
             sh '''
-              set -euxo pipefail
+              set -eux
               # apply dulu (pertama kali) / sync resource lain
               kubectl --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE} apply -f k8s/
               # update image ke tag unik -> trigger rolling update
@@ -83,7 +83,7 @@ pipeline {
             '''
           } catch (err) {
             sh '''
-              set -euxo pipefail
+              set -eux
               kubectl --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE} rollout undo deploy/${DEPLOYMENT_NAME} || true
             '''
             throw err
