@@ -98,7 +98,7 @@ pipeline {
       sh 'docker logout ${REGISTRY} || true'
       archiveArtifacts artifacts: 'k8s/*.yaml', onlyIfSuccessful: false
     }
-    success { echo "✅ Deployed ${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA} to ${KUBE_NAMESPACE}" }
-    failure { echo "❌ Deployment failed. Check logs above." }
+    success { echo "Deployed ${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA} to ${KUBE_NAMESPACE}" }
+    failure { echo "Deployment failed. Check logs above." }
   }
 }
