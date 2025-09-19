@@ -4,10 +4,10 @@ pipeline {
 
   environment {
     // --- Repo & Image ---
-    GIT_URL          = 'https://gitlab.com/afifheryanto/dkp-go.git'
+    GIT_URL          = 'https://github.com/seikyrooo/learn-jenkins.git'
     GIT_BRANCH       = 'main'
     REGISTRY         = '192.168.7.75:5000'
-    IMAGE_NAME       = 'testing-go'              // nama repo image di registry
+    IMAGE_NAME       = 'jenkins-tes2'              // nama repo image di registry
     // --- K8s ---
     KUBE_NAMESPACE   = 'default'
     DEPLOYMENT_NAME  = 'go-api'                  // nama Deployment
