@@ -1,25 +1,25 @@
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: go-api
-# spec:
-#   replicas: 2
-#   selector:
-#     matchLabels:
-#       app: go-api
-#   template:
-#     metadata:
-#       labels:
-#         app: go-api
-#     spec:
-#       containers:
-#       - name: go-api
-#         image: 192.168.7.75:5000/jenkins-tes2:latest
-#         ports:
-#         - containerPort: 8050
-#         readinessProbe:
-#           httpGet:
-#             path: /hello
-#             port: 8050
-#           initialDelaySeconds: 3
-#           periodSeconds: 5
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: go-api
+  template:
+    metadata:
+      labels:
+        app: go-api
+    spec:
+      containers:
+      - name: go-api
+        image: 192.168.7.75:5000/jenkins-tes2:latest
+        ports:
+        - containerPort: 8050
+        readinessProbe:
+          httpGet:
+            path: /hello
+            port: 8050
+          initialDelaySeconds: 3
+          periodSeconds: 5
