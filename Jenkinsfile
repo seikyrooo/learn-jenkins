@@ -4,18 +4,18 @@ pipeline {
 
   environment {
     // --- Repo & Image ---
-    GIT_URL          = 'https://github.com/seikyrooo/learn-jenkins.git'
-    GIT_BRANCH       = 'main'
-    REGISTRY         = '192.168.7.75:5000'
-    IMAGE_NAME       = 'jenkins-tes2'              // nama repo image di registry
+    GIT_URL        = 'https://github.com/seikyrooo/learn-jenkins.git'
+    GIT_BRANCH     = 'main'
+    REGISTRY       = '192.168.7.75:5000'
+    IMAGE_NAME     = 'jenkins-tes2'
     // --- K8s ---
-    KUBE_NAMESPACE   = 'default'
-    DEPLOYMENT_NAME  = 'go-api'                  // nama Deployment
-    CONTAINER_NAME   = 'go-api'                  // nama container di Deployment
-    // --- Credentials IDs (ubah jika namanya berbeda) ---
-    GIT_CRED_ID      = 'dkp-go-pipeline'
-    DOCKER_CRED_ID   = 'dkp-docker-registry'
-    KUBEFILE_CRED_ID = 'kubeconfig-prod'
+    KUBE_NAMESPACE = 'default'
+    DEPLOYMENT_NAME= 'go-api'
+    CONTAINER_NAME = 'go-api'
+    // --- Credentials (ubah kalau perlu) ---
+    //GIT_CRED_ID    = 'jenkins-tes2'            // kalau repo public, bisa kosongkan & pilih "- none -"
+    DOCKER_CRED_ID = 'dkp-docker-registry'
+    KUBE_CONFIG    = '/var/lib/jenkins/.kube/config' // kubeconfig sudah ada di host
   }
 
   stages {
@@ -31,7 +31,6 @@ pipeline {
 
     stage('Unit Test (Dockerized)') {
       steps {
-        // jalankan go test di container golang agar agent tidak wajib punya Go
         sh '''
           set -euxo pipefail
           docker run --rm -v "$PWD":/src -w /src golang:1.22 go test ./...
@@ -69,30 +68,25 @@ pipeline {
 
     stage('Deploy to Kubernetes') {
       steps {
-        withCredentials([file(credentialsId: "${KUBEFILE_CRED_ID}", variable: 'KCFG')]) {
-          script {
-            try {
-              sh '''
-                set -euxo pipefail
-                # apply dulu supaya objek ada (first time) / sync manifest lain (svc, configmap, dsb)
-                kubectl --kubeconfig="$KCFG" -n ${KUBE_NAMESPACE} apply -f k8s/
-
-                # update image dengan tag unik (SHA) untuk rolling update
-                kubectl --kubeconfig="$KCFG" -n ${KUBE_NAMESPACE} \
-                  set image deploy/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA} --record
-
-                # tunggu rollout selesai
-                kubectl --kubeconfig="$KCFG" -n ${KUBE_NAMESPACE} \
-                  rollout status deploy/${DEPLOYMENT_NAME} --timeout=180s
-              '''
-            } catch (err) {
-              // rollback otomatis jika rollout gagal
-              sh '''
-                set -euxo pipefail
-                kubectl --kubeconfig="$KCFG" -n ${KUBE_NAMESPACE} rollout undo deploy/${DEPLOYMENT_NAME} || true
-              '''
-              throw err
-            }
+        script {
+          try {
+            sh '''
+              set -euxo pipefail
+              # apply dulu (pertama kali) / sync resource lain
+              kubectl --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE} apply -f k8s/
+              # update image ke tag unik -> trigger rolling update
+              kubectl --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE} \
+                set image deploy/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA} --record
+              # tunggu rollout selesai
+              kubectl --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE} \
+                rollout status deploy/${DEPLOYMENT_NAME} --timeout=180s
+            '''
+          } catch (err) {
+            sh '''
+              set -euxo pipefail
+              kubectl --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE} rollout undo deploy/${DEPLOYMENT_NAME} || true
+            '''
+            throw err
           }
         }
       }
@@ -104,11 +98,7 @@ pipeline {
       sh 'docker logout ${REGISTRY} || true'
       archiveArtifacts artifacts: 'k8s/*.yaml', onlyIfSuccessful: false
     }
-    success {
-      echo "✅ Deployed ${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA} to namespace ${KUBE_NAMESPACE}"
-    }
-    failure {
-      echo "❌ Deployment failed. Check logs above."
-    }
+    success { echo "✅ Deployed ${REGISTRY}/${IMAGE_NAME}:${SHORT_SHA} to ${KUBE_NAMESPACE}" }
+    failure { echo "❌ Deployment failed. Check logs above." }
   }
 }
