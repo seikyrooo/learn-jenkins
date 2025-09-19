@@ -13,7 +13,7 @@ pipeline {
     DEPLOYMENT_NAME= 'go-api'
     CONTAINER_NAME = 'go-api'
     // --- Credentials (ubah kalau perlu) ---
-    //GIT_CRED_ID    = 'jenkins-tes2'            // kalau repo public, bisa kosongkan & pilih "- none -"
+    GIT_CRED_ID    = 'none'            // kalau repo public, bisa kosongkan & pilih "- none -"
     DOCKER_CRED_ID = 'dkp-docker-registry'
     KUBE_CONFIG    = '/var/lib/jenkins/.kube/config' // kubeconfig sudah ada di host
   }
