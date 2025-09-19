@@ -8,7 +8,7 @@ import (
 
 func main() {
 	http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello from Go API in Kubernetes!")
+		fmt.Fprintln(w, "Hello from Go API in Kubernetes! Deploy pake Control")
 	})
 
 	log.Println("Starting server on :8050")
