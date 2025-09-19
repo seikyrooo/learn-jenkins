@@ -3,9 +3,12 @@ kind: Service
 metadata:
   name: go-api-svc
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: go-api
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 8050
+      nodePort: 30090 
+      protocol: TCP
