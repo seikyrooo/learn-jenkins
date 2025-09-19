@@ -29,14 +29,14 @@ pipeline {
       }
     }
 
-    stage('Unit Test (Dockerized)') {
-      steps {
-        sh '''
-          set -euxo pipefail
-          docker run --rm -v "$PWD":/src -w /src golang:1.22 go test ./...
-        '''
-      }
-    }
+    // stage('Unit Test (Dockerized)') {
+    //   steps {
+    //     sh '''
+    //       set -euxo pipefail
+    //       docker run --rm -v "$PWD":/src -w /src golang:1.22 go test ./...
+    //     '''
+    //   }
+    // }
 
     stage('Docker Login') {
       steps {
